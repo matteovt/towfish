@@ -1,4 +1,5 @@
-#
+#!/usr/bin/env python
+
 # v0.1 - Initial construct, generic input & display
 # v0.2 - Removed extra axes,
 # v0.3 - Removed all extra, only essential info displayed.  
@@ -10,7 +11,9 @@ WHITE = (255, 255, 255)
 
 #define constants
 MAX_ANGLE = 15
+MAX_ANGLE_PER_SECOND = 6
 JOY_AXIS = 1
+FPS = 40
 #Classes
 class TextPrint:
     def __init__(self):
@@ -37,7 +40,7 @@ class TextPrint:
 pygame.init()
 
 #set width and height of screen [width, height]
-size = [500, 700]
+size = [500, 500]
 screen = pygame.display.set_mode(size)
 
 pygame.display.set_caption("Joystick Read")
@@ -61,6 +64,9 @@ hydrofoil_set_angle = 0
 hydrofoil_commanded_angle = 0
 joy_button_pressed = False
 joy_button_last = False
+
+
+
 # ------------- Main Program ------------
 while done == False:
     #EVENT PROCESSING
@@ -74,7 +80,7 @@ while done == False:
             joy_button_pressed ^= True
             #if button pressed, update commanded value
             if(joy_button_pressed == True):
-                hydrofoil_commanded_angle = joystick.get_axis(1) * MAX_ANGLE
+                hydrofoil_commanded_angle = hydrofoil_set_angle
                 
 
         #DRAW SCREEN
@@ -95,14 +101,20 @@ while done == False:
             textPrint.Print(screen,"Hold Hydrofoil Angle: {}".format(joy_button_pressed) )
             textPrint.Print(screen,'')
             
-            joystick_commanded_angle = joystick.get_axis(JOY_AXIS) * MAX_ANGLE
-            hydrofoil_set_angle = joystick_commanded_angle
+            joystick_commanded_angle = joystick.get_axis(JOY_AXIS) * MAX_ANGLE_PER_SECOND/FPS
+            hydrofoil_commanded_angle += joystick_commanded_angle
+
+            if(hydrofoil_commanded_angle > MAX_ANGLE):
+                hydrofoil_commanded_angle = MAX_ANGLE
+                
+            if(hydrofoil_commanded_angle < -MAX_ANGLE):
+                hydrofoil_commanded_angle = -MAX_ANGLE
 
             if(joy_button_pressed == True):
-                hydrofoil_set_angle = hydrofoil_commanded_angle
+                #hydrofoil_set_angle = hydrofoil_commanded_angle
                 joy_button_last = True
             else:               
-                hydrofoil_set_angle = joystick_commanded_angle
+                hydrofoil_set_angle =  hydrofoil_commanded_angle
                 joy_button_last = False
             
                 
@@ -113,7 +125,7 @@ while done == False:
         pygame.display.flip()
 
         #Limit to 20 frames per second
-        clock.tick(20)
+        clock.tick(FPS)
 
 #close the window and quit
 pygame.quit()
